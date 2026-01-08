@@ -1,0 +1,1070 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flashcard Quiz</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #fff;
+            padding: 1.5rem;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 1.5rem;
+        }
+
+        h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .subtitle {
+            color: #8892b0;
+            font-size: 0.95rem;
+            margin-top: 0.25rem;
+        }
+
+        /* API Key Section */
+        .api-section {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .api-section.hidden {
+            display: none;
+        }
+
+        .api-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.75rem;
+        }
+
+        .api-label {
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #8892b0;
+        }
+
+        .api-link {
+            font-size: 0.75rem;
+            color: #f093fb;
+            text-decoration: none;
+        }
+
+        .api-link:hover {
+            text-decoration: underline;
+        }
+
+        .api-input-row {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .api-input {
+            flex: 1;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 0.75rem;
+            color: #fff;
+            font-size: 0.9rem;
+            font-family: monospace;
+        }
+
+        .api-input:focus {
+            outline: none;
+            border-color: #f093fb;
+        }
+
+        .btn-save-key {
+            background: #f093fb;
+            color: #1a1a2e;
+            border: none;
+            border-radius: 8px;
+            padding: 0.75rem 1rem;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .btn-save-key:hover {
+            opacity: 0.9;
+        }
+
+        .key-saved {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.5rem 0;
+        }
+
+        .key-status {
+            color: #10b981;
+            font-size: 0.85rem;
+        }
+
+        .btn-change-key {
+            background: none;
+            border: none;
+            color: #8892b0;
+            font-size: 0.8rem;
+            cursor: pointer;
+            text-decoration: underline;
+        }
+
+        /* Input Section */
+        .input-section {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
+            padding: 1.25rem;
+            margin-bottom: 1rem;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .input-label {
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #8892b0;
+            margin-bottom: 0.75rem;
+            display: block;
+        }
+
+        textarea {
+            width: 100%;
+            height: 150px;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 1rem;
+            color: #fff;
+            font-size: 0.95rem;
+            line-height: 1.6;
+            resize: vertical;
+            font-family: inherit;
+        }
+
+        textarea::placeholder {
+            color: #5a6380;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: #f093fb;
+        }
+
+        .input-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 1rem;
+        }
+
+        .char-count {
+            font-size: 0.8rem;
+            color: #5a6380;
+        }
+
+        .btn-generate {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: #fff;
+            border: none;
+            border-radius: 10px;
+            padding: 0.75rem 1.5rem;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-generate:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(240, 147, 251, 0.3);
+        }
+
+        .btn-generate:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* Loading State */
+        .loading {
+            text-align: center;
+            padding: 2rem;
+            color: #8892b0;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid rgba(240, 147, 251, 0.2);
+            border-top-color: #f093fb;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Quiz Section */
+        .quiz-section {
+            display: none;
+        }
+
+        .quiz-section.active {
+            display: block;
+        }
+
+        .quiz-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .quiz-title {
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #8892b0;
+        }
+
+        .quiz-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .btn-icon {
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            border-radius: 8px;
+            padding: 0.5rem;
+            color: #8892b0;
+            cursor: pointer;
+            font-size: 1rem;
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .btn-icon:hover {
+            background: rgba(255, 255, 255, 0.15);
+            color: #fff;
+        }
+
+        /* Flashcard */
+        .flashcard-container {
+            perspective: 1000px;
+            margin-bottom: 1rem;
+        }
+
+        .flashcard {
+            background: linear-gradient(135deg, #2d2d44 0%, #1f1f35 100%);
+            border-radius: 20px;
+            min-height: 220px;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            cursor: pointer;
+            transition: transform 0.6s;
+            transform-style: preserve-3d;
+            position: relative;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .flashcard.flipped {
+            transform: rotateY(180deg);
+        }
+
+        .card-face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+        }
+
+        .card-front {
+            /* Front face styles */
+        }
+
+        .card-back {
+            transform: rotateY(180deg);
+            background: linear-gradient(135deg, #1f3a3a 0%, #1a2a2a 100%);
+            border-radius: 20px;
+        }
+
+        .card-label {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #f093fb;
+            margin-bottom: 1rem;
+        }
+
+        .card-back .card-label {
+            color: #10b981;
+        }
+
+        .card-content {
+            font-size: 1.25rem;
+            line-height: 1.5;
+            color: #fff;
+        }
+
+        .card-hint {
+            position: absolute;
+            bottom: 1rem;
+            font-size: 0.75rem;
+            color: #5a6380;
+        }
+
+        /* Progress */
+        .progress-bar {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            height: 6px;
+            margin-bottom: 1rem;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            background: linear-gradient(90deg, #f093fb 0%, #f5576c 100%);
+            height: 100%;
+            border-radius: 10px;
+            transition: width 0.3s ease;
+        }
+
+        .stats {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 1rem;
+            font-size: 0.9rem;
+            color: #8892b0;
+        }
+
+        .stat-value {
+            color: #fff;
+            font-weight: 600;
+        }
+
+        /* Quiz Controls */
+        .quiz-controls {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .btn-wrong, .btn-correct {
+            flex: 1;
+            padding: 1rem;
+            border: none;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-wrong {
+            background: rgba(239, 68, 68, 0.2);
+            color: #ef4444;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+
+        .btn-wrong:hover {
+            background: rgba(239, 68, 68, 0.3);
+        }
+
+        .btn-correct {
+            background: rgba(16, 185, 129, 0.2);
+            color: #10b981;
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+
+        .btn-correct:hover {
+            background: rgba(16, 185, 129, 0.3);
+        }
+
+        .btn-new-deck {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.1);
+            color: #8892b0;
+            border: none;
+            border-radius: 10px;
+            padding: 0.75rem;
+            font-size: 0.9rem;
+            cursor: pointer;
+        }
+
+        .btn-new-deck:hover {
+            background: rgba(255, 255, 255, 0.15);
+            color: #fff;
+        }
+
+        /* Results */
+        .results {
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .results-score {
+            font-size: 4rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .results-label {
+            font-size: 1.1rem;
+            color: #8892b0;
+            margin-bottom: 1.5rem;
+        }
+
+        .results-message {
+            font-size: 1.25rem;
+            color: #fff;
+            margin-bottom: 2rem;
+        }
+
+        .btn-restart {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: #fff;
+            border: none;
+            border-radius: 10px;
+            padding: 1rem 2rem;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            margin-right: 0.5rem;
+        }
+
+        .btn-restart:hover {
+            opacity: 0.9;
+        }
+
+        /* Error */
+        .error {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            border-radius: 12px;
+            padding: 1rem;
+            color: #ef4444;
+            text-align: center;
+            margin-bottom: 1rem;
+        }
+
+        /* Saved Decks */
+        .saved-section {
+            margin-top: 1.5rem;
+        }
+
+        .saved-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.75rem;
+        }
+
+        .saved-title {
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #8892b0;
+        }
+
+        .saved-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .saved-deck {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            padding: 0.75rem 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .saved-deck:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .deck-info {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .deck-name {
+            font-size: 0.95rem;
+            color: #fff;
+        }
+
+        .deck-meta {
+            font-size: 0.75rem;
+            color: #5a6380;
+        }
+
+        .btn-delete-deck {
+            background: none;
+            border: none;
+            color: #5a6380;
+            cursor: pointer;
+            padding: 0.25rem;
+            font-size: 1rem;
+        }
+
+        .btn-delete-deck:hover {
+            color: #ef4444;
+        }
+
+        /* Keyboard Hint */
+        .keyboard-hint {
+            text-align: center;
+            font-size: 0.75rem;
+            color: #5a6380;
+            margin-bottom: 1rem;
+        }
+
+        .keyboard-hint span {
+            display: inline-block;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 0.15rem 0.4rem;
+            border-radius: 4px;
+            font-family: monospace;
+            color: #8892b0;
+        }
+
+        @media (max-width: 600px) {
+            .keyboard-hint {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Flashcard Quiz</h1>
+            <p class="subtitle">Paste text, generate cards, test yourself</p>
+        </header>
+
+        <!-- API Key Section -->
+        <div class="api-section" id="apiSection">
+            <div class="api-header">
+                <span class="api-label">Gemini API Key</span>
+                <a href="https://aistudio.google.com/app/apikey" target="_blank" class="api-link">Get free key</a>
+            </div>
+            <div id="apiInputArea">
+                <div class="api-input-row">
+                    <input type="password" class="api-input" id="apiKeyInput" placeholder="Enter your Gemini API key...">
+                    <button class="btn-save-key" onclick="saveApiKey()">Save</button>
+                </div>
+            </div>
+            <div id="keySavedArea" class="key-saved" style="display: none;">
+                <span class="key-status">API key saved</span>
+                <button class="btn-change-key" onclick="changeApiKey()">Change key</button>
+            </div>
+        </div>
+
+        <!-- Input Section -->
+        <div class="input-section" id="inputSection">
+            <label class="input-label">Paste your text</label>
+            <textarea id="textInput" placeholder="Paste any text here - notes, articles, textbook content..."></textarea>
+            <div class="input-footer">
+                <span class="char-count"><span id="charCount">0</span> characters</span>
+                <button class="btn-generate" id="generateBtn" onclick="generateCards()">Generate Cards</button>
+            </div>
+        </div>
+
+        <!-- Loading -->
+        <div class="loading" id="loading" style="display: none;">
+            <div class="spinner"></div>
+            <p>Generating flashcards...</p>
+        </div>
+
+        <!-- Error -->
+        <div class="error" id="error" style="display: none;"></div>
+
+        <!-- Quiz Section -->
+        <div class="quiz-section" id="quizSection">
+            <div class="quiz-header">
+                <span class="quiz-title">Study Mode</span>
+                <div class="quiz-actions">
+                    <button class="btn-icon" onclick="shuffleDeck()" title="Shuffle">🔀</button>
+                    <button class="btn-icon" onclick="restartQuiz()" title="Restart">🔄</button>
+                </div>
+            </div>
+
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+
+            <div class="stats">
+                <span>Card <span class="stat-value" id="currentCard">1</span> of <span class="stat-value" id="totalCards">0</span></span>
+                <span>Score: <span class="stat-value" id="score">0</span>/<span class="stat-value" id="attempted">0</span></span>
+            </div>
+
+            <div class="flashcard-container">
+                <div class="flashcard" id="flashcard" onclick="flipCard()">
+                    <div class="card-face card-front">
+                        <div class="card-label">Question</div>
+                        <div class="card-content" id="questionText"></div>
+                        <div class="card-hint">Tap to reveal answer</div>
+                    </div>
+                    <div class="card-face card-back">
+                        <div class="card-label">Answer</div>
+                        <div class="card-content" id="answerText"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="quiz-controls" id="quizControls">
+                <button class="btn-wrong" onclick="markWrong()">✗ Wrong</button>
+                <button class="btn-correct" onclick="markCorrect()">✓ Correct</button>
+            </div>
+
+            <div class="keyboard-hint">
+                <span>Space</span> flip &nbsp;
+                <span>←</span> wrong &nbsp;
+                <span>→</span> correct &nbsp;
+                <span>S</span> shuffle &nbsp;
+                <span>R</span> restart
+            </div>
+
+            <button class="btn-new-deck" onclick="newDeck()">+ Create New Deck</button>
+        </div>
+
+        <!-- Results -->
+        <div class="quiz-section" id="resultsSection">
+            <div class="results">
+                <div class="results-score" id="finalScore">0%</div>
+                <div class="results-label">Final Score</div>
+                <div class="results-message" id="resultsMessage"></div>
+                <button class="btn-restart" onclick="restartQuiz()">Study Again</button>
+                <button class="btn-new-deck" onclick="newDeck()">New Deck</button>
+            </div>
+        </div>
+
+        <!-- Saved Decks -->
+        <div class="saved-section" id="savedSection">
+            <div class="saved-header">
+                <span class="saved-title">Saved Decks</span>
+            </div>
+            <div class="saved-list" id="savedList"></div>
+        </div>
+    </div>
+
+    <script>
+        // State
+        let apiKey = localStorage.getItem('flashcard_api_key') || '';
+        let deck = [];
+        let currentIndex = 0;
+        let score = 0;
+        let attempted = 0;
+        let isFlipped = false;
+        let savedDecks = JSON.parse(localStorage.getItem('flashcard_decks') || '[]');
+
+        // Elements
+        const textInput = document.getElementById('textInput');
+        const charCount = document.getElementById('charCount');
+        const generateBtn = document.getElementById('generateBtn');
+
+        // Initialize
+        function init() {
+            updateApiKeyUI();
+            renderSavedDecks();
+
+            textInput.addEventListener('input', () => {
+                charCount.textContent = textInput.value.length;
+            });
+
+            // Keyboard shortcuts
+            document.addEventListener('keydown', (e) => {
+                // Only when quiz is active
+                if (!document.getElementById('quizSection').classList.contains('active')) return;
+                // Don't trigger when typing in input
+                if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+
+                switch (e.key) {
+                    case ' ':
+                        e.preventDefault();
+                        flipCard();
+                        break;
+                    case 'ArrowLeft':
+                    case '1':
+                        e.preventDefault();
+                        markWrong();
+                        break;
+                    case 'ArrowRight':
+                    case '2':
+                        e.preventDefault();
+                        markCorrect();
+                        break;
+                    case 's':
+                    case 'S':
+                        e.preventDefault();
+                        shuffleDeck();
+                        break;
+                    case 'r':
+                    case 'R':
+                        e.preventDefault();
+                        restartQuiz();
+                        break;
+                }
+            });
+        }
+
+        // API Key Management
+        function updateApiKeyUI() {
+            const apiInputArea = document.getElementById('apiInputArea');
+            const keySavedArea = document.getElementById('keySavedArea');
+
+            if (apiKey) {
+                apiInputArea.style.display = 'none';
+                keySavedArea.style.display = 'flex';
+            } else {
+                apiInputArea.style.display = 'block';
+                keySavedArea.style.display = 'none';
+            }
+        }
+
+        function saveApiKey() {
+            const input = document.getElementById('apiKeyInput');
+            if (input.value.trim()) {
+                apiKey = input.value.trim();
+                localStorage.setItem('flashcard_api_key', apiKey);
+                updateApiKeyUI();
+            }
+        }
+
+        function changeApiKey() {
+            document.getElementById('apiKeyInput').value = '';
+            document.getElementById('apiInputArea').style.display = 'block';
+            document.getElementById('keySavedArea').style.display = 'none';
+        }
+
+        // Generate Cards
+        async function generateCards() {
+            const text = textInput.value.trim();
+
+            if (!apiKey) {
+                showError('Please enter your Gemini API key first');
+                return;
+            }
+
+            if (!text) {
+                showError('Please paste some text first');
+                return;
+            }
+
+            if (text.length < 50) {
+                showError('Please paste more text (at least 50 characters)');
+                return;
+            }
+
+            showLoading(true);
+            hideError();
+
+            try {
+                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${apiKey}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        contents: [{
+                            parts: [{
+                                text: `Analyze this text and generate 5-10 flashcard question-answer pairs. Focus on key concepts, definitions, important facts, and testable knowledge.
+
+Return ONLY a valid JSON array in this exact format, with no other text:
+[{"question": "What is X?", "answer": "X is..."}, ...]
+
+Text to analyze:
+${text}`
+                            }]
+                        }],
+                        generationConfig: {
+                            temperature: 0.7,
+                            maxOutputTokens: 2048
+                        }
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.error) {
+                    throw new Error(data.error.message || 'API error');
+                }
+
+                const content = data.candidates?.[0]?.content?.parts?.[0]?.text;
+                if (!content) {
+                    throw new Error('No response from API');
+                }
+
+                // Parse JSON from response
+                const jsonMatch = content.match(/\[[\s\S]*\]/);
+                if (!jsonMatch) {
+                    throw new Error('Could not parse flashcards from response');
+                }
+
+                deck = JSON.parse(jsonMatch[0]);
+
+                if (!Array.isArray(deck) || deck.length === 0) {
+                    throw new Error('No flashcards generated');
+                }
+
+                // Save deck
+                const deckName = text.substring(0, 40).replace(/\s+/g, ' ').trim() + '...';
+                const newDeckData = {
+                    id: Date.now(),
+                    name: deckName,
+                    cards: deck,
+                    created: new Date().toISOString()
+                };
+                savedDecks.unshift(newDeckData);
+                if (savedDecks.length > 10) savedDecks.pop(); // Keep max 10
+                localStorage.setItem('flashcard_decks', JSON.stringify(savedDecks));
+                renderSavedDecks();
+
+                // Start quiz
+                startQuiz();
+
+            } catch (error) {
+                showError(error.message || 'Failed to generate flashcards');
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        // Quiz Functions
+        function startQuiz() {
+            currentIndex = 0;
+            score = 0;
+            attempted = 0;
+            isFlipped = false;
+
+            document.getElementById('inputSection').style.display = 'none';
+            document.getElementById('quizSection').classList.add('active');
+            document.getElementById('resultsSection').classList.remove('active');
+
+            updateCard();
+            updateStats();
+        }
+
+        function updateCard() {
+            const card = deck[currentIndex];
+            document.getElementById('questionText').textContent = card.question;
+            document.getElementById('answerText').textContent = card.answer;
+
+            const flashcard = document.getElementById('flashcard');
+            flashcard.classList.remove('flipped');
+            isFlipped = false;
+        }
+
+        function updateStats() {
+            document.getElementById('currentCard').textContent = currentIndex + 1;
+            document.getElementById('totalCards').textContent = deck.length;
+            document.getElementById('score').textContent = score;
+            document.getElementById('attempted').textContent = attempted;
+
+            const progress = ((currentIndex) / deck.length) * 100;
+            document.getElementById('progressFill').style.width = `${progress}%`;
+        }
+
+        function flipCard() {
+            const flashcard = document.getElementById('flashcard');
+            flashcard.classList.toggle('flipped');
+            isFlipped = !isFlipped;
+        }
+
+        function markCorrect() {
+            if (!isFlipped) {
+                flipCard();
+                return;
+            }
+            score++;
+            attempted++;
+            nextCard();
+        }
+
+        function markWrong() {
+            if (!isFlipped) {
+                flipCard();
+                return;
+            }
+            attempted++;
+            nextCard();
+        }
+
+        function nextCard() {
+            currentIndex++;
+
+            if (currentIndex >= deck.length) {
+                showResults();
+            } else {
+                updateCard();
+                updateStats();
+            }
+        }
+
+        function showResults() {
+            document.getElementById('quizSection').classList.remove('active');
+            document.getElementById('resultsSection').classList.add('active');
+
+            const percentage = Math.round((score / deck.length) * 100);
+            document.getElementById('finalScore').textContent = `${percentage}%`;
+
+            let message = '';
+            if (percentage === 100) message = 'Perfect! You nailed it!';
+            else if (percentage >= 80) message = 'Great job! Almost there!';
+            else if (percentage >= 60) message = 'Good effort! Keep practicing!';
+            else message = 'Keep studying, you\'ll get it!';
+
+            document.getElementById('resultsMessage').textContent = message;
+        }
+
+        function restartQuiz() {
+            currentIndex = 0;
+            score = 0;
+            attempted = 0;
+            isFlipped = false;
+
+            document.getElementById('resultsSection').classList.remove('active');
+            document.getElementById('quizSection').classList.add('active');
+
+            updateCard();
+            updateStats();
+        }
+
+        function shuffleDeck() {
+            for (let i = deck.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [deck[i], deck[j]] = [deck[j], deck[i]];
+            }
+            restartQuiz();
+        }
+
+        function newDeck() {
+            deck = [];
+            currentIndex = 0;
+            score = 0;
+            attempted = 0;
+
+            document.getElementById('quizSection').classList.remove('active');
+            document.getElementById('resultsSection').classList.remove('active');
+            document.getElementById('inputSection').style.display = 'block';
+            textInput.value = '';
+            charCount.textContent = '0';
+        }
+
+        // Saved Decks
+        function renderSavedDecks() {
+            const list = document.getElementById('savedList');
+
+            if (savedDecks.length === 0) {
+                list.innerHTML = '<p style="color: #5a6380; font-size: 0.85rem;">No saved decks yet</p>';
+                return;
+            }
+
+            list.innerHTML = savedDecks.map(d => `
+                <div class="saved-deck" onclick="loadDeck(${d.id})">
+                    <div class="deck-info">
+                        <span class="deck-name">${escapeHtml(d.name)}</span>
+                        <span class="deck-meta">${d.cards.length} cards</span>
+                    </div>
+                    <button class="btn-delete-deck" onclick="deleteDeck(event, ${d.id})">×</button>
+                </div>
+            `).join('');
+        }
+
+        function loadDeck(id) {
+            const found = savedDecks.find(d => d.id === id);
+            if (found) {
+                deck = [...found.cards];
+                startQuiz();
+            }
+        }
+
+        function deleteDeck(event, id) {
+            event.stopPropagation();
+            savedDecks = savedDecks.filter(d => d.id !== id);
+            localStorage.setItem('flashcard_decks', JSON.stringify(savedDecks));
+            renderSavedDecks();
+        }
+
+        // Utilities
+        function showLoading(show) {
+            document.getElementById('loading').style.display = show ? 'block' : 'none';
+            document.getElementById('inputSection').style.display = show ? 'none' : 'block';
+            generateBtn.disabled = show;
+        }
+
+        function showError(message) {
+            const error = document.getElementById('error');
+            error.textContent = message;
+            error.style.display = 'block';
+        }
+
+        function hideError() {
+            document.getElementById('error').style.display = 'none';
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Initialize
+        init();
+    </script>
+</body>
+</html>
